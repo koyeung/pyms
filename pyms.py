@@ -221,7 +221,7 @@ def map_record(record, fmt):
 
 class MSFile(object):
     def __init__(self, in_file, fmt):
-        if isinstance(in_file, file) or isinstance(in_file, StringIO):
+        if hasattr(in_file, 'read'):
             self.fh = in_file
         else:
             self.fh = open(in_file, 'rb')
