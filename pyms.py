@@ -212,11 +212,15 @@ DATFileFormat = MSIndexFileFormat(DATHeader, DATRecord)
 
 
 def map_record(record, fmt):
-    out = dict()
-    for field in fmt:
-        dmap = fmt[field]
-        out[field] = dmap.f(record[dmap.i])
-    return out
+    try:
+        out = dict()
+        for field in fmt:
+            dmap = fmt[field]
+            out[field] = dmap.f(record[dmap.i])
+        return out
+    except Exception as e:
+        print("Failed to add '{0}' to {1}".format(field, out))
+        raise
 
 
 class MSFile(object):
@@ -290,18 +294,16 @@ class MSStock(MSDATFile):
 
 class MSDirectory:
     def __init__(self, path):
-        try:
-            if not os.path.exists(path):
-                raise Exception("Invalid Path")
-            self.path = path if (path[-1] == '/') else path + '/'
-            self.emaster = MSEMasterFile(self.path + 'emaster')
-            self.record_count = self.emaster.record_count
-            self.xmaster = None
-            if os.path.exists(self.path + 'xmaster'):
-                self.xmaster = MSXMasterFile(self.path + 'xmaster')
-                self.record_count += self.xmaster.record_count
-        except Exception as e:
-            raise e
+          if not os.path.exists(path):
+              raise Exception("Invalid Path")
+          self.path = path if (path[-1] == '/') else path + '/'
+          self.emaster = MSEMasterFile(self.path + 'emaster')
+          self.record_count = self.emaster.record_count
+          self.xmaster = None
+          if os.path.exists(self.path + 'xmaster'):
+              self.xmaster = MSXMasterFile(self.path + 'xmaster')
+              self.record_count += self.xmaster.record_count
+
 
     def __iter__(self):
         self.emaster.setup()
@@ -311,8 +313,16 @@ class MSDirectory:
 
     def next(self):
         try:
-            result = self.emaster.next()
-            return(MSStock(result, self.path))
+            try:
+                result = self.emaster.next()
+            except (IOError, ValueError) as e:
+                print('{0}: {1}'.format(type(e).__name__, e))
+                return(None)
+            try:
+                return(MSStock(result, self.path))
+            except (IOError, ValueError) as e:
+                print('{0} {1}: {2}'.format(result['symbol'], type(e).__name__, e))
+                return(None)
         except StopIteration:
             try:
                 if (self.xmaster is not None):
