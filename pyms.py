@@ -285,7 +285,7 @@ class MSStock(MSDATFile):
         super(MSStock, self).__init__(filename)
 
     def __repr__(self):
-        return 'MSStock :\n' + self.symbol + ' (' + self.name + ')'
+        return '{0} "{1}" ({2})'.format(self.symbol, self.name, self.record_count)
 
 
 class MSDirectory:
@@ -334,7 +334,7 @@ class MSDirectory:
             print(e)
 
     def __repr__(self):
-        return "MSDirectory :\n" + self.path
+        return "{0} ({1})".format(self.path, self.record_count)
 
 
 class PremiumDataExchange(dict):
