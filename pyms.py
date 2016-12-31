@@ -103,11 +103,11 @@ def c_uint(x):
 
 
 def ms_str(x):
-    if PY2X:
-        return x.strip('\x00 \t\n')
-    else:
-        text = x.decode('iso-8859-1')
-        return text.strip('\x00 \t\n')
+
+    if not PY2X:
+        x = x.decode('iso-8859-1')
+
+    return x.strip('\x00 \t\n').split('\00', 1)[0]
 
 
 def ms_em_date(x):
