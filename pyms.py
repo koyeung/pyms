@@ -16,6 +16,7 @@ import sys
 import struct
 import datetime
 import os.path
+import logging
 
 PY2X = sys.version_info < (3, 0)
 
@@ -174,7 +175,8 @@ EMasterRecord = RecordFormat(192,
         'name': DataMap(32, 16, ms_str),
         'time_frame': DataMap(60, 1, c_char),
         'first_date': DataMap(64, 4, ms_em_date),
-        'last_date': DataMap(72, 4, ms_em_date)
+        'last_date': DataMap(72, 4, ms_em_date),
+        'ext_name': DataMap(139, 53, ms_str)
     }
 )
 
@@ -292,7 +294,10 @@ class MSStock(MSDATFile):
     def __init__(self, header, dat_path, use_uppercase_filename):
         self.first_date = header['first_date']
         self.last_date = header['last_date']
-        self.name = header['name']
+        if 'ext_name' in header and header['ext_name']:
+            self.name = header['ext_name']
+        else:
+            self.name = header['name']
         self.symbol = header['symbol']
         self.time_frame = header['time_frame']
         filenum = header['filenum']
