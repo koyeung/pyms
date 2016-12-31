@@ -16,9 +16,9 @@ import sys
 import struct
 import datetime
 import os.path
-import logging
 
 PY2X = sys.version_info < (3, 0)
+PY3K = sys.version_info >= (3, 0)
 
 
 def reader(incoming_bytes):
@@ -87,7 +87,13 @@ def int2date(in_date):
 
 
 def c_char(x):
-    return struct.unpack("c", x)[0]
+
+    c = struct.unpack("c", x)[0]
+
+    if PY2X:
+        return c
+    else:
+        return c.decode()
 
 
 def c_uchar(x):
@@ -104,7 +110,7 @@ def c_uint(x):
 
 def ms_str(x):
 
-    if not PY2X:
+    if PY3K:
         x = x.decode('iso-8859-1')
 
     return x.strip('\x00 \t\n').split('\00', 1)[0]
