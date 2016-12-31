@@ -283,14 +283,18 @@ class MSDATFile(MSFile):
 
 
 class MSStock(MSDATFile):
-    def __init__(self, header, dat_path):
+    def __init__(self, header, dat_path, use_uppercase_filename):
         self.first_date = header['first_date']
         self.last_date = header['last_date']
         self.name = header['name']
         self.symbol = header['symbol']
         filenum = header['filenum']
+
         ext = '.dat' if filenum < 256 else '.mwd'
-        filename = dat_path + 'F' + str(filenum) + ext
+        if use_uppercase_filename:
+            ext = ext.upper()
+
+        filename = os.path.join(dat_path, 'F' + str(filenum) + ext)
         super(MSStock, self).__init__(filename)
 
     def __repr__(self):
@@ -301,12 +305,22 @@ class MSDirectory:
     def __init__(self, path):
           if not os.path.exists(path):
               raise Exception("Invalid Path")
-          self.path = path if (path[-1] == '/') else path + '/'
-          self.emaster = MSEMasterFile(self.path + 'emaster')
+          self.path = path
+
+          emaster_path = os.path.join(self.path, 'EMASTER')
+          if os.path.exists(emaster_path):
+              self.use_uppercase_filename = True
+          else:
+              self.use_uppercase_filename = False
+              emaster_path = os.path.join(self.path, 'emaster')
+
+          self.emaster = MSEMasterFile(emaster_path)
           self.record_count = self.emaster.record_count
           self.xmaster = None
-          if os.path.exists(self.path + 'xmaster'):
-              self.xmaster = MSXMasterFile(self.path + 'xmaster')
+
+          xmaster_path = os.path.join(self.path, 'XMASTER') if self.use_uppercase_filename else os.path.join(self.path, 'xmaster')
+          if os.path.exists(xmaster_path):
+              self.xmaster = MSXMasterFile(xmaster_path)
               self.record_count += self.xmaster.record_count
 
 
@@ -324,7 +338,7 @@ class MSDirectory:
                 print('{0}: {1}'.format(type(e).__name__, e))
                 return(None)
             try:
-                return(MSStock(result, self.path))
+                return(MSStock(result, self.path, self.use_uppercase_filename))
             except (IOError, ValueError) as e:
                 print('{0} {1}: {2}'.format(result['symbol'], type(e).__name__, e))
                 return(None)
@@ -332,7 +346,7 @@ class MSDirectory:
             try:
                 if (self.xmaster is not None):
                     result = self.xmaster.next()
-                    return(MSStock(result, self.path))
+                    return(MSStock(result, self.path, self.use_uppercase_filename))
             except StopIteration:
                 pass
         raise(StopIteration)
@@ -346,7 +360,7 @@ class MSDirectory:
                 record = self.emaster[idx]
             else:
                 record = self.xmaster[idx - 255]
-            return MSStock(record, self.path)
+            return MSStock(record, self.path, self.use_uppercase_filenameh)
         except Exception as e:
             print('{0}: {1}'.format(type(e).__name__, e))
 
@@ -362,11 +376,11 @@ class PremiumDataExchange(dict):
         try:
             if not os.path.exists(path):
                 raise Exception("Invalid Path")
-            self.path = path if (path[-1] == '/') else path + '/'
+            self.path = path
             self.name = name
             self.record_count = 0
             for f in PremiumDataExchange.folders:
-                self[f] = MSDirectory(self.path + f)
+                self[f] = MSDirectory(os.path.join(self.path, f))
                 self.record_count += self[f].record_count
         except:
             raise
