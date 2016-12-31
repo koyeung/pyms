@@ -85,6 +85,10 @@ def int2date(in_date):
     return datetime.date(year, month, day)
 
 
+def c_char(x):
+    return struct.unpack("c", x)[0]
+
+
 def c_uchar(x):
     return struct.unpack("B", x)[0]
 
@@ -168,6 +172,7 @@ EMasterRecord = RecordFormat(192,
         'numfields': DataMap(6, 1, c_uchar),
         'symbol': DataMap(11, 14, ms_str),
         'name': DataMap(32, 16, ms_str),
+        'time_frame': DataMap(60, 1, c_char),
         'first_date': DataMap(64, 4, ms_em_date),
         'last_date': DataMap(72, 4, ms_em_date)
     }
@@ -184,6 +189,7 @@ XMasterRecord = RecordFormat(150,
         'filenum': DataMap(65, 2, c_ushort),
         'symbol': DataMap(1, 15, ms_str),
         'name': DataMap(16, 46, ms_str),
+        'time_frame': DataMap(62, 1, c_char),
         'first_date': DataMap(108, 4, ms_xm_date),
         'last_date': DataMap(116, 4, ms_xm_date)
     }
@@ -288,6 +294,7 @@ class MSStock(MSDATFile):
         self.last_date = header['last_date']
         self.name = header['name']
         self.symbol = header['symbol']
+        self.time_frame = header['time_frame']
         filenum = header['filenum']
 
         ext = '.dat' if filenum < 256 else '.mwd'
