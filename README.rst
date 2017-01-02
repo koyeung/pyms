@@ -17,4 +17,4 @@ PyMS - A Metastock tool for Python
 Features
 =========
 
-* TODO
+* support case-sensitive filesystem
